@@ -2,7 +2,7 @@
 ##  Go Learnings
 > go build -o out && ./out
 - **go build** command compiles the application into an executable to run it in simplest terms.
-go build -o (-o force the build to write the resulting executable or object to the named output file or directory).
+    - go build -o (-o force the build to write the resulting executable or object to the named output file or directory).
 > reference: go help build
 ##  System Defintions
 - **Process** is an active, independent instance of a program with its own memory space.
@@ -12,18 +12,18 @@ go build -o (-o force the build to write the resulting executable or object to t
 - **Heap** - user allocated memory is stored.
 ## HTTP Fundamentals
 - **Socket** is the fundamental abstraction for network communication.
-Acts as an interface between application and transport layer (OSI model).
-"Special" type of file that supports read and write.
-TCP (connection) or UDP (connectionless) socket examples.
+    - Acts as an interface between application and transport layer (OSI model).
+    - "Special" type of file that supports read and write.
+    - TCP (connection) or UDP (connectionless) socket examples.
 > analogy block
 1) telephone (socket) is the medium in which the client (your phone) dials server's address and port (phone number and person you want to talk to) to establish a connection and exchange information.
 2) IP address: street address of a building (correct computer on the network), Port: apartment number within the building (identify specific application or service to connect to).
 3) client (person making the call to a service) and server (the person/system answer call to provide the service) while listening for incoming connection.
 > analogy block
 - **File Descriptor** is an integer value used by the operating systems to identify manage open files.
-Linux/Unix Environments sees everything to be a file (directories, files, devices, network connections).
-Starts with non-negative integer (0 stdin, 1 stdout, 2 stderr).
-Within OS kernels, file descriptor = index pointing to a file table entry.
+    - Linux/Unix Environments sees everything to be a file (directories, files, devices, network connections).
+    - Starts with non-negative integer (0 stdin, 1 stdout, 2 stderr).
+    - Within OS kernels, file descriptor = index pointing to a file table entry.
 > analogy = file descriptor is a car key to a specific car
 > file table entry = kernel data structure stores info about currently open files and I/O resources
 ### Roadmap between socket and file descriptors
@@ -40,9 +40,9 @@ Within OS kernels, file descriptor = index pointing to a file table entry.
 7) closes connection.
 # Terminal Linux Commands
 #### sudo lsof -i tcp:8080
-super user check list of open files including those of TCP ports 8080
+- super user check list of open files including those of TCP ports 8080
 #### sudo kill -9 <PID>
-super user force kills(-9) on selected process
+- super user force kills(-9) on selected process
 # Credit
 ##### Boot Dev Courses
 ##### https://dev.to/leapcell/behind-the-scenes-tcp-connections-in-gos-nethttp-46ek
