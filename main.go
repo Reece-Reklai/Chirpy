@@ -9,6 +9,9 @@ import (
 	"time"
 )
 
+// -> Make a bash file to execute graceshutdown / search for open file on port 8080 / kill all that pops up somehow . . .
+// -> Continue with boot dev
+
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

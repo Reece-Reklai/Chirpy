@@ -25,7 +25,7 @@
     - Starts with non-negative integer (0 stdin, 1 stdout, 2 stderr).
     - Within OS kernels, file descriptor = index pointing to a file table entry.
 > analogy = file descriptor is a car key to a specific car
-> file table entry = kernel data structure stores info about currently open files and I/O resources
+>> file table entry = kernel data structure stores info about currently open files and I/O resources
 ### Roadmap between socket and file descriptors
 1) os allocates file descriptor.
 2) the descriptor can be used for subsequent network operations(write, read, close, etc).
