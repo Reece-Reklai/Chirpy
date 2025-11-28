@@ -41,8 +41,10 @@
 # Terminal Linux Commands
 #### sudo lsof -i tcp:8080
 - super user check list of open files including those of TCP ports 8080
+> Reference: lsof --help
 #### sudo kill -9 <PID>
 - super user force kills(-9) on selected process
+> Reference help kill
 # Credit
 ##### Boot Dev Courses
 ##### https://dev.to/leapcell/behind-the-scenes-tcp-connections-in-gos-nethttp-46ek
