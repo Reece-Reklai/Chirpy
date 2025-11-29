@@ -1,20 +1,24 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync/atomic"
 
 	"github.com/Reece-Reklai/go_serve/internal"
+	"github.com/Reece-Reklai/go_serve/internal/database"
 	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
+	databaseQuery  *database.Queries
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -48,13 +52,14 @@ func respondWithError(w http.ResponseWriter, code int, msg string) error {
 }
 
 func main() {
-	// dbURL := os.Getenv("DB_URL")
-	// db, err := sql.Open("postgres", dbURL)
-	// if err != nil {
-	// 	fmt.Println("failed to open database connection")
-	// }
-	// dbQueries := database.New(db)
 	var apiCfg apiConfig
+	dbURL := os.Getenv("DB_URL")
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		fmt.Println("failed to open database connection")
+	}
+	dbQueries := database.New(db)
+	apiCfg.databaseQuery = dbQueries
 	staticDir := "./public/"
 	headerMethod := map[string]string{
 		"GET":    "GET",
