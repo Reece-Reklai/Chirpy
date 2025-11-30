@@ -91,6 +91,31 @@ func (router *Router) handlers(apiCfg *apiConfig, staticDir string, headerMethod
 		w.WriteHeader(201)
 		w.Write(response)
 	})
+	router.Mux.HandleFunc(fmt.Sprintf("%s %s%s", headerMethod["GET"], endPoints["api"], "/chirps/{chirpID}"), func(w http.ResponseWriter, req *http.Request) {
+		defer req.Body.Close()
+		var responseChirp SingleChirp
+		chirpID := req.PathValue("chirpID")
+		if chirpID == "" {
+			respondWithError(w, 404, "no match found in request")
+			return
+		}
+		stringToUUID, err := uuid.ParseBytes([]byte(chirpID))
+		if err != nil {
+			respondWithError(w, 400, "failed to parse request")
+			return
+		}
+		chirp, err := apiCfg.databaseQuery.GetChirpById(req.Context(), stringToUUID)
+		if err != nil {
+			respondWithError(w, 404, "failed to get chirp")
+			return
+		}
+		responseChirp.ID = chirp.ID
+		responseChirp.CreatedAt = chirp.CreatedAt
+		responseChirp.UpdatedAt = chirp.UpdatedAt
+		responseChirp.Body = chirp.Body
+		responseChirp.UserID = chirp.UserID
+		respondWithJSON(w, 200, responseChirp)
+	})
 
 	router.Mux.HandleFunc(fmt.Sprintf("%s %s%s", headerMethod["GET"], endPoints["api"], "/chirps"), func(w http.ResponseWriter, req *http.Request) {
 		defer req.Body.Close()
@@ -98,6 +123,7 @@ func (router *Router) handlers(apiCfg *apiConfig, staticDir string, headerMethod
 		chirps, err := apiCfg.databaseQuery.GetAllChirps(req.Context())
 		if err != nil {
 			respondWithError(w, 500, "failed to get all chirps")
+			return
 		}
 		allChirps := make([]SingleChirp, 0)
 		for _, value := range chirps {
@@ -113,10 +139,12 @@ func (router *Router) handlers(apiCfg *apiConfig, staticDir string, headerMethod
 	router.Mux.HandleFunc(fmt.Sprintf("%s %s%s", headerMethod["POST"], endPoints["api"], "/chirps"), func(w http.ResponseWriter, req *http.Request) {
 		defer req.Body.Close()
 		chirpProfanity := struct {
+			ID     uuid.UUID `json:"id"`
 			Body   string    `json:"body"`
 			UserID uuid.UUID `json:"user_id"`
 		}{}
 		chirpClean := struct {
+			ID     uuid.UUID `json:"id"`
 			Body   string    `json:"body"`
 			UserID uuid.UUID `json:"user_id"`
 		}{}
@@ -164,21 +192,24 @@ func (router *Router) handlers(apiCfg *apiConfig, staticDir string, headerMethod
 		if valid == false {
 			chirpClean.Body = createWord
 			chirpClean.UserID = chirpProfanity.UserID
-			_, err := apiCfg.databaseQuery.CreateChirp(req.Context(), database.CreateChirpParams{Body: chirpClean.Body, UserID: chirpClean.UserID})
+			chirp, err := apiCfg.databaseQuery.CreateChirp(req.Context(), database.CreateChirpParams{Body: chirpClean.Body, UserID: chirpClean.UserID})
+			chirpClean.ID = chirp.ID
 			if err != nil {
 				respondWithError(w, 500, "failed to create chirp")
+				return
 			}
 			respondWithJSON(w, 201, chirpClean)
-			return
+		} else {
+			chirpClean.Body = chirpProfanity.Body
+			chirpClean.UserID = chirpProfanity.UserID
+			chirp, err := apiCfg.databaseQuery.CreateChirp(req.Context(), database.CreateChirpParams{Body: chirpClean.Body, UserID: chirpClean.UserID})
+			chirpClean.ID = chirp.ID
+			if err != nil {
+				respondWithError(w, 500, "failed to create chirp")
+				return
+			}
+			respondWithJSON(w, 201, chirpClean)
 		}
-		chirpClean.Body = chirpProfanity.Body
-		chirpClean.UserID = chirpProfanity.UserID
-		_, err = apiCfg.databaseQuery.CreateChirp(req.Context(), database.CreateChirpParams{Body: chirpClean.Body, UserID: chirpClean.UserID})
-		if err != nil {
-			respondWithError(w, 500, "failed to create chirp")
-		}
-		respondWithJSON(w, 201, chirpClean)
-
 	})
 
 	// Admin Endpoints --------------------------------------------------------------------------------------------------------------------------------
