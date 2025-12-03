@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Reece-Reklai/go_serve/internal/auth"
 	"github.com/Reece-Reklai/go_serve/internal/database"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
@@ -51,11 +52,11 @@ func (router *Router) handlers(apiCfg *apiConfig, staticDir string, headerMethod
 		w.WriteHeader(200)
 		io.WriteString(w, "OK")
 	})
-
-	router.Mux.HandleFunc(fmt.Sprintf("%s %s%s", headerMethod["POST"], endPoints["api"], "/users"), func(w http.ResponseWriter, req *http.Request) {
+	router.Mux.HandleFunc(fmt.Sprintf("%s %s%s", headerMethod["POST"], endPoints["api"], "/login"), func(w http.ResponseWriter, req *http.Request) {
 		defer req.Body.Close()
-		chirpUser := struct {
-			Email string `json:"email"`
+		authenticateUser := struct {
+			Email    string `json:"email"`
+			Password string `json:"password"`
 		}{}
 		userJSON := struct {
 			ID        uuid.UUID `json:"id"`
@@ -68,14 +69,65 @@ func (router *Router) handlers(apiCfg *apiConfig, staticDir string, headerMethod
 			respondWithError(w, 400, "failed to read request body")
 			return
 		}
-		err = json.Unmarshal(body, &chirpUser)
+		err = json.Unmarshal(body, &authenticateUser)
 		if err != nil {
 			respondWithError(w, 400, "failed to unmarshal request")
 			return
 		}
-		user, err := apiCfg.databaseQuery.CreateUser(req.Context(), database.CreateUserParams{ID: uuid.New(), Email: chirpUser.Email})
+		user, err := apiCfg.databaseQuery.GetUserByEmail(req.Context(), authenticateUser.Email)
 		if err != nil {
-			respondWithError(w, 500, "failed to create user")
+			error := fmt.Sprintf("failed: %v", err)
+			respondWithError(w, 500, error)
+			return
+		}
+		match, err := auth.CheckPasswordHash(authenticateUser.Password, user.Password)
+		if err != nil {
+			respondWithError(w, 500, "failed to check password match")
+			return
+		}
+		if match == true {
+			userJSON.ID = user.ID
+			userJSON.CreatedAt = user.CreatedAt
+			userJSON.UpdatedAt = user.UpdatedAt
+			userJSON.Email = user.Email
+			respondWithJSON(w, 200, userJSON)
+			return
+		} else {
+			respondWithError(w, 500, "authentication failed")
+			return
+		}
+	})
+	router.Mux.HandleFunc(fmt.Sprintf("%s %s%s", headerMethod["POST"], endPoints["api"], "/users"), func(w http.ResponseWriter, req *http.Request) {
+		defer req.Body.Close()
+		getUSER := struct {
+			Email    string `json:"email"`
+			Password string `json:"password"`
+		}{}
+		userJSON := struct {
+			ID        uuid.UUID `json:"id"`
+			CreatedAt time.Time `json:"created_at"`
+			UpdatedAt time.Time `json:"updated_at"`
+			Email     string    `json:"email"`
+		}{}
+		body, err := io.ReadAll(req.Body)
+		if err != nil {
+			respondWithError(w, 400, "failed to read request body")
+			return
+		}
+		err = json.Unmarshal(body, &getUSER)
+		if err != nil {
+			respondWithError(w, 400, "failed to unmarshal request")
+			return
+		}
+		hashPassword, err := auth.HashPassword(getUSER.Password)
+		if err != nil {
+			respondWithError(w, 400, "failed to hash")
+			return
+		}
+		user, err := apiCfg.databaseQuery.CreateUser(req.Context(), database.CreateUserParams{ID: uuid.New(), Email: getUSER.Email, Password: hashPassword})
+		if err != nil {
+			error := fmt.Sprintf("failed: %v", err)
+			respondWithError(w, 500, error)
 			return
 		}
 		userJSON.ID = user.ID
@@ -106,7 +158,8 @@ func (router *Router) handlers(apiCfg *apiConfig, staticDir string, headerMethod
 		}
 		chirp, err := apiCfg.databaseQuery.GetChirpById(req.Context(), stringToUUID)
 		if err != nil {
-			respondWithError(w, 404, "failed to get chirp")
+			error := fmt.Sprintf("failed: %v", err)
+			respondWithError(w, 500, error)
 			return
 		}
 		responseChirp.ID = chirp.ID
@@ -122,7 +175,8 @@ func (router *Router) handlers(apiCfg *apiConfig, staticDir string, headerMethod
 		var responseChirp SingleChirp
 		chirps, err := apiCfg.databaseQuery.GetAllChirps(req.Context())
 		if err != nil {
-			respondWithError(w, 500, "failed to get all chirps")
+			error := fmt.Sprintf("failed: %v", err)
+			respondWithError(w, 500, error)
 			return
 		}
 		allChirps := make([]SingleChirp, 0)
@@ -195,20 +249,24 @@ func (router *Router) handlers(apiCfg *apiConfig, staticDir string, headerMethod
 			chirp, err := apiCfg.databaseQuery.CreateChirp(req.Context(), database.CreateChirpParams{Body: chirpClean.Body, UserID: chirpClean.UserID})
 			chirpClean.ID = chirp.ID
 			if err != nil {
-				respondWithError(w, 500, "failed to create chirp")
+				error := fmt.Sprintf("failed: %v", err)
+				respondWithError(w, 500, error)
 				return
 			}
 			respondWithJSON(w, 201, chirpClean)
+			return
 		} else {
 			chirpClean.Body = chirpProfanity.Body
 			chirpClean.UserID = chirpProfanity.UserID
 			chirp, err := apiCfg.databaseQuery.CreateChirp(req.Context(), database.CreateChirpParams{Body: chirpClean.Body, UserID: chirpClean.UserID})
 			chirpClean.ID = chirp.ID
 			if err != nil {
-				respondWithError(w, 500, "failed to create chirp")
+				error := fmt.Sprintf("failed: %v", err)
+				respondWithError(w, 500, error)
 				return
 			}
 			respondWithJSON(w, 201, chirpClean)
+			return
 		}
 	})
 
@@ -222,13 +280,13 @@ func (router *Router) handlers(apiCfg *apiConfig, staticDir string, headerMethod
 
 	router.Mux.HandleFunc(fmt.Sprintf("%s %s%s", headerMethod["POST"], endPoints["admin"], "/reset"), func(w http.ResponseWriter, req *http.Request) {
 		if apiCfg.platform != "dev" {
-			respondWithError(w, 403, "something went wrong")
+			respondWithError(w, 403, "something went wrong permission rights")
 			return
 		}
 		apiCfg.resetMetric()
 		err := apiCfg.databaseQuery.DeleteAllUsers(req.Context())
 		if err != nil {
-			respondWithError(w, 500, "something went wrong")
+			respondWithError(w, 500, "something went wrong with database")
 			return
 		}
 		w.WriteHeader(200)

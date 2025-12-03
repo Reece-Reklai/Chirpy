@@ -48,6 +48,8 @@
 7) closes connection.
 ### Extra Info
 1) Readiness endpoints are commonly used by external systems to check if our server is ready to receive traffic
+2) Passwords - store passwords not as plain text and pass strength matters
+    - Hashing takes string as input and returns another string entirely (which is commonly refered to as a hash)
 # Terminal Linux Commands
 #### sudo lsof -i tcp:8080
 - super user check list of open files including those of TCP ports 8080
