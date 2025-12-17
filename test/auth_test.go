@@ -31,10 +31,18 @@ func TestAuthJWT(t *testing.T) {
 	}
 }
 
-func TestStripStringOnHeaderAuth(t *testing.T) {
+func TestStripStringOnHeaderAuthSecret(t *testing.T) {
 	bearerToken := "Bearer TOKEN_STRING"
 	strip := strings.Split(bearerToken, " ")
 	if strip[1] != "TOKEN_STRING" {
+		t.Error("Word was not found")
+	}
+}
+
+func TestStripStringOnHeaderAuthPolkaKey(t *testing.T) {
+	bearerToken := "ApiKey THE_KEY_HERE"
+	strip := strings.Split(bearerToken, " ")
+	if strip[1] != "THE_KEY_HERE" {
 		t.Error("Word was not found")
 	}
 }

@@ -20,6 +20,7 @@ type apiConfig struct {
 	databaseQuery  *database.Queries
 	platform       string
 	secret         string
+	polka          string
 }
 
 type User struct {
@@ -50,6 +51,7 @@ func main() {
 	dbURL := os.Getenv("DB_URL")
 	apiCfg.platform = os.Getenv("PLATFORM")
 	apiCfg.secret = os.Getenv("SECRET")
+	apiCfg.polka = os.Getenv("POLKA_KEY")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		fmt.Println("failed to open database connection")

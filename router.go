@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -32,10 +33,11 @@ func (userHandler *userHandler) create(w http.ResponseWriter, req *http.Request)
 		Password string `json:"password"`
 	}{}
 	userJSON := struct {
-		ID        uuid.UUID `json:"id"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-		Email     string    `json:"email"`
+		ID         uuid.UUID `json:"id"`
+		CreatedAt  time.Time `json:"created_at"`
+		UpdatedAt  time.Time `json:"updated_at"`
+		Email      string    `json:"email"`
+		IsChirpRed bool      `json:"is_chirpy_red"`
 	}{}
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -62,6 +64,7 @@ func (userHandler *userHandler) create(w http.ResponseWriter, req *http.Request)
 	userJSON.CreatedAt = user.CreatedAt
 	userJSON.UpdatedAt = user.UpdatedAt
 	userJSON.Email = user.Email
+	userJSON.IsChirpRed = user.IsChirpyRed
 	response, err := json.Marshal(userJSON)
 	if err != nil {
 		respondWithError(w, 400, "failed to marshal json into bytes")
@@ -134,6 +137,7 @@ func (loginHandler *loginHandler) create(w http.ResponseWriter, req *http.Reques
 		Email        string    `json:"email"`
 		Token        string    `json:"token"`
 		RefreshToken string    `json:"refresh_token"`
+		IsChirpyRed  bool      `json:"is_chirpy_red"`
 	}{}
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -181,6 +185,7 @@ func (loginHandler *loginHandler) create(w http.ResponseWriter, req *http.Reques
 		userJSON.CreatedAt = user.CreatedAt
 		userJSON.UpdatedAt = user.UpdatedAt
 		userJSON.Email = user.Email
+		userJSON.IsChirpyRed = user.IsChirpyRed
 		respondWithJSON(w, 200, userJSON)
 		return
 	}
@@ -292,20 +297,57 @@ type ChirpRow struct {
 func (chirpHandler *chirpHandler) getAllChirp(w http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 	var responseChirp ChirpRow
-	chirps, err := chirpHandler.databaseQuery.GetAllChirps(req.Context())
+	ascend := true
+	query := req.URL.Query()
+	authorID := query.Get("author_id")
+	sorting := req.URL.Query().Get("sort")
+	if sorting == "desc" {
+		ascend = false
+	}
+	if authorID == "" {
+		chirps, err := chirpHandler.databaseQuery.GetAllChirps(req.Context())
+		if err != nil {
+			error := fmt.Sprintf("failed: %v", err)
+			respondWithError(w, 500, error)
+			return
+		}
+		allChirps := make([]ChirpRow, 0)
+		for _, value := range chirps {
+			responseChirp.ID = value.ID
+			responseChirp.CreatedAt = value.CreatedAt
+			responseChirp.UpdatedAt = value.UpdatedAt
+			responseChirp.Body = value.Body
+			responseChirp.UserID = value.UserID
+			allChirps = append(allChirps, responseChirp)
+		}
+		if ascend == false {
+			sort.Slice(allChirps, func(i, j int) bool { return allChirps[i].CreatedAt.After(allChirps[j].CreatedAt) })
+		}
+		respondWithJSON(w, 200, allChirps)
+		return
+	}
+	stringToUUID, err := uuid.Parse(authorID)
 	if err != nil {
-		error := fmt.Sprintf("failed: %v", err)
+		respondWithError(w, 500, "failed string to UUID")
+		return
+	}
+	chirpByUserID, err := chirpHandler.databaseQuery.GetChirpByUserID(req.Context(), stringToUUID)
+	if err != nil {
+		error := fmt.Sprintf("failed to retrieve chirp by UUID: %v", err)
 		respondWithError(w, 500, error)
 		return
 	}
 	allChirps := make([]ChirpRow, 0)
-	for _, value := range chirps {
+	for _, value := range chirpByUserID {
 		responseChirp.ID = value.ID
 		responseChirp.CreatedAt = value.CreatedAt
 		responseChirp.UpdatedAt = value.UpdatedAt
 		responseChirp.Body = value.Body
 		responseChirp.UserID = value.UserID
 		allChirps = append(allChirps, responseChirp)
+	}
+	if ascend == false {
+		sort.Slice(allChirps, func(i, j int) bool { return allChirps[i].CreatedAt.After(allChirps[j].CreatedAt) })
 	}
 	respondWithJSON(w, 200, allChirps)
 }
@@ -323,17 +365,17 @@ func (chirpHandler *chirpHandler) getChirpByID(w http.ResponseWriter, req *http.
 		respondWithError(w, 400, "failed to parse request")
 		return
 	}
-	chirp, err := chirpHandler.databaseQuery.GetChirpById(req.Context(), stringToUUID)
+	chirps, err := chirpHandler.databaseQuery.GetChirpByID(req.Context(), stringToUUID)
 	if err != nil {
 		error := fmt.Sprintf("failed: %v", err)
 		respondWithError(w, 404, error)
 		return
 	}
-	responseChirp.ID = chirp.ID
-	responseChirp.CreatedAt = chirp.CreatedAt
-	responseChirp.UpdatedAt = chirp.UpdatedAt
-	responseChirp.Body = chirp.Body
-	responseChirp.UserID = chirp.UserID
+	responseChirp.ID = chirps.ID
+	responseChirp.CreatedAt = chirps.CreatedAt
+	responseChirp.UpdatedAt = chirps.UpdatedAt
+	responseChirp.Body = chirps.Body
+	responseChirp.UserID = chirps.UserID
 	respondWithJSON(w, 200, responseChirp)
 }
 
@@ -361,7 +403,7 @@ func (chirpHandler *chirpHandler) delete(w http.ResponseWriter, req *http.Reques
 		respondWithError(w, 500, "failed to parse request")
 		return
 	}
-	chirp, err := chirpHandler.databaseQuery.GetChirpById(req.Context(), stringToUUID)
+	chirp, err := chirpHandler.databaseQuery.GetChirpByID(req.Context(), stringToUUID)
 	if err != nil {
 		error := fmt.Sprintf("failed: %v", err)
 		respondWithError(w, 404, error)
@@ -372,7 +414,7 @@ func (chirpHandler *chirpHandler) delete(w http.ResponseWriter, req *http.Reques
 		respondWithError(w, 403, error)
 		return
 	}
-	err = chirpHandler.databaseQuery.DeleteChirpByUserID(req.Context(), database.DeleteChirpByUserIDParams{ID: stringToUUID, UserID: tokenSubjectUserID})
+	err = chirpHandler.databaseQuery.DeleteChirpByUserID(req.Context(), database.DeleteChirpByUserIDParams{ID: chirp.ID, UserID: tokenSubjectUserID})
 	if err != nil {
 		error := fmt.Sprintf("failed: %v", err)
 		respondWithError(w, 404, error)
@@ -402,6 +444,7 @@ func (router *Router) handlers(apiCfg *apiConfig, staticDir string, headerMethod
 	postChirp := fmt.Sprintf("%s %s%s", headerMethod["POST"], endPoints["api"], "/chirps")
 	postRefresh := fmt.Sprintf("%s %s%s", headerMethod["POST"], endPoints["api"], "/refresh")
 	postRevoke := fmt.Sprintf("%s %s%s", headerMethod["POST"], endPoints["api"], "/revoke")
+	postEvent := fmt.Sprintf("%s %s%s", headerMethod["POST"], endPoints["api"], "/polka/webhooks")
 	getAllChirps := fmt.Sprintf("%s %s%s", headerMethod["GET"], endPoints["api"], "/chirps")
 	getChirpID := fmt.Sprintf("%s %s%s", headerMethod["GET"], endPoints["api"], "/chirps/{chirpID}")
 	putUser := fmt.Sprintf("%s %s%s", headerMethod["PUT"], endPoints["api"], "/users")
@@ -420,6 +463,45 @@ func (router *Router) handlers(apiCfg *apiConfig, staticDir string, headerMethod
 	router.Mux.HandleFunc(user.post, user.create)
 	router.Mux.HandleFunc(login.post, login.create)
 	router.Mux.HandleFunc(chirp.post, chirp.create)
+	router.Mux.HandleFunc(postEvent, func(w http.ResponseWriter, req *http.Request) {
+		event := struct {
+			Data struct {
+				UserID string `json:"user_id"`
+			} `json:"data"`
+			Event string `json:"event"`
+		}{}
+		_, err := auth.GetAPIKey(req.Header)
+		if err != nil {
+			respondWithError(w, 401, "invalid key")
+		}
+		body, err := io.ReadAll(req.Body)
+		if err != nil {
+			respondWithError(w, 400, "failed to read request body")
+			return
+		}
+		err = json.Unmarshal(body, &event)
+		if err != nil {
+			respondWithError(w, 400, "failed to unmarshal request body")
+			return
+		}
+		stringToUUID, err := uuid.Parse(event.Data.UserID)
+		if err != nil {
+			respondWithError(w, 500, "failed to parse string to UUID")
+			return
+		}
+		if event.Event == "user.upgraded" {
+			err = apiCfg.databaseQuery.UpdateChirpyIsRed(req.Context(), database.UpdateChirpyIsRedParams{UpdatedAt: time.Now(), ID: stringToUUID})
+			if err != nil {
+				error := fmt.Sprintf("failed to upgrade user: %v", err)
+				respondWithError(w, 401, error)
+				return
+			}
+			respondWithJSON(w, 204, "")
+		} else {
+			w.WriteHeader(204)
+			return
+		}
+	})
 	router.Mux.HandleFunc(postRefresh, func(w http.ResponseWriter, req *http.Request) {
 		token := struct {
 			Token string `json:"token"`
