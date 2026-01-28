@@ -1,4 +1,4 @@
-# Chirpy - Production-Ready Social Media API
+# Chirpy
 
 <div align="center">
 
