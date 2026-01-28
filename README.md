@@ -4,7 +4,6 @@
 
 ![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=flat&logo=go)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?style=flat&logo=postgresql)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
 
 *A scalable, secure REST API for Twitter-like social networking built in Go*
 
