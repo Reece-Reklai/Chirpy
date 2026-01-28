@@ -243,7 +243,7 @@ Content-Type: application/json
 - **Input Validation**: Request validation and sanitization
 - **Authorization**: Role-based access control and resource ownership checks
 
-## Architecture
+## Architecture Design Patterns
 
 ### Database Design
 - **Normalized Schema**: Proper relational design with foreign key constraints
