@@ -45,3 +45,15 @@ cd chirpy
 cp .env.example .env  # Add your JWT secret
 go mod download
 go run main.go
+# Create user
+curl -X POST http://localhost:8080/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"secret"}'
+
+# Create chirp (requires auth token)
+curl -X POST http://localhost:8080/api/chirps \
+  -H "Authorization: Bearer <your-jwt-token>" \
+  -d '{"content":"Hello, Chirpy!"}'
+
+
+
