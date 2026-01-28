@@ -5,13 +5,13 @@
 ![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=flat&logo=go)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?style=flat&logo=postgresql)
 
-*A scalable, secure REST API for Twitter-like social networking built in Go*
+*A scalable, secure REST API with an attempt to replicate Twitter-like social networking built in Go*
 
 </div>
 
 ## Overview
 
-Chirpy is a production-ready backend API that demonstrates enterprise-grade Go development practices. This project showcases advanced backend engineering concepts including JWT authentication, database design, API security, and scalable architecture patterns. Built as a comprehensive example for technical evaluation and learning purposes.
+Chirpy is a backend API that was made with a goal in mind: to expose me to Go development practices, backend engineering concepts including JWT authentication, database design, API security, and scalable architecture patterns.
 
 ## Key Features
 
