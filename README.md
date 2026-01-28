@@ -10,34 +10,34 @@
 
 </div>
 
-## 🎯 Overview
+## Overview
 
 Chirpy is a production-ready backend API that demonstrates enterprise-grade Go development practices. This project showcases advanced backend engineering concepts including JWT authentication, database design, API security, and scalable architecture patterns. Built as a comprehensive example for technical evaluation and learning purposes.
 
-## ✨ Key Features
+## Key Features
 
-### 🔐 Security & Authentication
+### Security & Authentication
 - **JWT Token System**: Secure access tokens with configurable expiration
 - **Refresh Tokens**: Long-lived token rotation for enhanced security
 - **Password Hashing**: Argon2ID implementation for industry-standard password security
 - **API Key Authentication**: Webhook integration with secure API key validation
 - **Content Moderation**: Automated profanity filtering with word censorship
 
-### 🏗️ Architecture & Design
+### Architecture & Design
 - **Clean Architecture**: Separated concerns with organized package structure
 - **Database Integration**: PostgreSQL with SQLC for type-safe database operations
 - **Migration Management**: Schema versioning with migration scripts
 - **RESTful Design**: Compliant API design following REST principles
 - **Middleware Pattern**: Request tracking, metrics collection, and authentication middleware
 
-### 📊 Core Functionality
+### Core Functionality
 - **User Management**: Registration, authentication, profile updates with premium tier support
 - **Social Features**: Create, read, delete chirps with user authorization
 - **Content Operations**: Advanced querying with sorting, filtering by author
 - **Admin Dashboard**: Metrics collection and administrative operations
 - **Webhook Integration**: External service integration for user upgrades
 
-## 🛠️ Technical Stack
+## Technical Stack
 
 | Component | Technology | Purpose |
 |-----------|------------|---------|
@@ -48,7 +48,7 @@ Chirpy is a production-ready backend API that demonstrates enterprise-grade Go d
 | **HTTP Server** | Go stdlib `net/http` | Lightweight HTTP handling |
 | **Configuration** | Godotenv | Environment variable management |
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 chirpy/
@@ -66,7 +66,7 @@ chirpy/
 └── docs/                     # Documentation
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Go 1.24 or higher
@@ -115,7 +115,7 @@ go run main.go
 
 The server will start on `http://localhost:8080`
 
-## 📚 API Documentation
+## API Docs
 
 ### Authentication Endpoints
 
@@ -224,7 +224,7 @@ Content-Type: application/json
 }
 ```
 
-## 🔧 Development Practices
+## Implementation Goals
 
 ### Code Quality
 - **Type Safety**: Full type safety with SQLC and strong Go typing
@@ -244,7 +244,7 @@ Content-Type: application/json
 - **Input Validation**: Request validation and sanitization
 - **Authorization**: Role-based access control and resource ownership checks
 
-## 🎯 Technical Highlights for Engineers
+## Architecture
 
 ### Database Design
 - **Normalized Schema**: Proper relational design with foreign key constraints
@@ -275,41 +275,3 @@ Run specific test packages:
 ```bash
 go test ./test/auth_test.go
 ```
-
-## 📈 Production Considerations
-
-This codebase demonstrates production-ready practices including:
-- Environment-based configuration
-- Structured logging readiness
-- Health check endpoints
-- Metrics collection framework
-- Database migration management
-- Security best practices
-
-## 🤝 Contributing
-
-This project serves as a demonstration of professional Go development practices. For educational purposes and technical evaluation, the codebase includes:
-
-1. **Clean Architecture Patterns**: Demonstrates separation of concerns
-2. **Database Integration**: Shows production-grade database handling
-3. **Security Implementation**: Industry-standard authentication and authorization
-4. **API Design**: RESTful principles and proper HTTP semantics
-5. **Error Handling**: Comprehensive error management strategies
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 📞 Contact
-
-Built as a demonstration of professional Go development capabilities. This project showcases backend engineering skills applicable to production environments.
-
----
-
-<div align="center">
-
-**Built with ❤️ in Go**
-
-*Demonstrating enterprise-grade backend development practices*
-
-</div>
